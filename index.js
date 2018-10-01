@@ -5,6 +5,4 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-if (process.env.NODE_ENV !== 'production') {
-  module.exports = require('./factoryWithTypeCheckers')(() => null, false);
-}
+module.exports = require('./factoryWithTypeCheckers')(() => null, false);
