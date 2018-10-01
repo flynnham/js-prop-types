@@ -7,25 +7,11 @@
 
 'use strict';
 
-var printWarning = function() {};
+const loggedTypeFailures = {};
 
-if (process.env.NODE_ENV !== 'production') {
-  var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');
-  var loggedTypeFailures = {};
-
-  printWarning = function(text) {
-    var message = 'Warning: ' + text;
-    if (typeof console !== 'undefined') {
-      console.error(message);
-    }
-    try {
-      // --- Welcome to debugging React ---
-      // This error was thrown as a convenience so that you can use this stack
-      // to find the callsite that caused this warning to fire.
-      throw new Error(message);
-    } catch (x) {}
-  };
-}
+function printWarning(text) {
+	throw new Error(text);
+};
 
 /**
  * Assert that the values match with the type specs.
@@ -35,11 +21,9 @@ if (process.env.NODE_ENV !== 'production') {
  * @param {object} values Runtime values that need to be type-checked
  * @param {string} location e.g. "prop", "context", "child context"
  * @param {string} componentName Name of the component for error messages.
- * @param {?Function} getStack Returns the component stack.
  * @private
  */
-function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
-  if (process.env.NODE_ENV !== 'production') {
+function checkPropTypes(typeSpecs, values, location = 'param', componentName = 'function') {
     for (var typeSpecName in typeSpecs) {
       if (typeSpecs.hasOwnProperty(typeSpecName)) {
         var error;
@@ -51,19 +35,19 @@ function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
           // behavior as without this statement except with a better message.
           if (typeof typeSpecs[typeSpecName] !== 'function') {
             var err = Error(
-              (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +
-              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'
+              (componentName || 'Anonymous') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +
+              'it must be a function, usually from the `js-prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'
             );
             err.name = 'Invariant Violation';
             throw err;
           }
-          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);
+          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null);
         } catch (ex) {
           error = ex;
         }
         if (error && !(error instanceof Error)) {
           printWarning(
-            (componentName || 'React class') + ': type specification of ' +
+            (componentName || 'Anonymous') + ': type specification of ' +
             location + ' `' + typeSpecName + '` is invalid; the type checker ' +
             'function must return `null` or an `Error` but returned a ' + typeof error + '. ' +
             'You may have forgotten to pass an argument to the type checker ' +
@@ -77,15 +61,12 @@ function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
           // same error.
           loggedTypeFailures[error.message] = true;
 
-          var stack = getStack ? getStack() : '';
-
           printWarning(
-            'Failed ' + location + ' type: ' + error.message + (stack != null ? stack : '')
+            error.message
           );
         }
       }
     }
-  }
 }
 
 module.exports = checkPropTypes;

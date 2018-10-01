@@ -8,15 +8,11 @@
 'use strict';
 
 var assign = require('object-assign');
-
-var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');
 var checkPropTypes = require('./checkPropTypes');
 
 var has = Function.call.bind(Object.prototype.hasOwnProperty);
-var printWarning = function() {};
 
-if (process.env.NODE_ENV !== 'production') {
-  printWarning = function(text) {
+const printWarning = function(text) {
     var message = 'Warning: ' + text;
     if (typeof console !== 'undefined') {
       console.error(message);
@@ -27,8 +23,7 @@ if (process.env.NODE_ENV !== 'production') {
       // to find the callsite that caused this warning to fire.
       throw new Error(message);
     } catch (x) {}
-  };
-}
+};
 
 function emptyFunctionThatReturnsNull() {
   return null;
@@ -173,36 +168,6 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
       componentName = componentName || ANONYMOUS;
       propFullName = propFullName || propName;
 
-      if (secret !== ReactPropTypesSecret) {
-        if (throwOnDirectAccess) {
-          // New behavior only for users of `prop-types` package
-          var err = new Error(
-            'Calling PropTypes validators directly is not supported by the `prop-types` package. ' +
-            'Use `PropTypes.checkPropTypes()` to call them. ' +
-            'Read more at http://fb.me/use-check-prop-types'
-          );
-          err.name = 'Invariant Violation';
-          throw err;
-        } else if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
-          // Old behavior for people using React.PropTypes
-          var cacheKey = componentName + ':' + propName;
-          if (
-            !manualPropTypeCallCache[cacheKey] &&
-            // Avoid spamming the console because they are often not actionable except for lib authors
-            manualPropTypeWarningCount < 3
-          ) {
-            printWarning(
-              'You are manually calling a React.PropTypes validation ' +
-              'function for the `' + propFullName + '` prop on `' + componentName  + '`. This is deprecated ' +
-              'and will throw in the standalone `prop-types` package. ' +
-              'You may be seeing this warning due to a third-party PropTypes ' +
-              'library. See https://fb.me/react-warning-dont-call-proptypes ' + 'for details.'
-            );
-            manualPropTypeCallCache[cacheKey] = true;
-            manualPropTypeWarningCount++;
-          }
-        }
-      }
       if (props[propName] == null) {
         if (isRequired) {
           if (props[propName] === null) {
@@ -254,7 +219,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
         return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an array.'));
       }
       for (var i = 0; i < propValue.length; i++) {
-        var error = typeChecker(propValue, i, componentName, location, propFullName + '[' + i + ']', ReactPropTypesSecret);
+        var error = typeChecker(propValue, i, componentName, location, propFullName + '[' + i + ']');
         if (error instanceof Error) {
           return error;
         }
@@ -320,7 +285,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
       }
       for (var key in propValue) {
         if (has(propValue, key)) {
-          var error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
+          var error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key);
           if (error instanceof Error) {
             return error;
           }
@@ -351,7 +316,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
     function validate(props, propName, componentName, location, propFullName) {
       for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
         var checker = arrayOfTypeCheckers[i];
-        if (checker(props, propName, componentName, location, propFullName, ReactPropTypesSecret) == null) {
+        if (checker(props, propName, componentName, location, propFullName) == null) {
           return null;
         }
       }
@@ -383,7 +348,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
         if (!checker) {
           continue;
         }
-        var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
+        var error = checker(propValue, key, componentName, location, propFullName + '.' + key);
         if (error) {
           return error;
         }
@@ -412,7 +377,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
             '\nValid keys: ' +  JSON.stringify(Object.keys(shapeTypes), null, '  ')
           );
         }
-        var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
+        var error = checker(propValue, key, componentName, location, propFullName + '.' + key);
         if (error) {
           return error;
         }
