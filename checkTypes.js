@@ -69,4 +69,14 @@ function checkPropTypes(typeSpecs, values, location = 'param', componentName = '
 	}
 }
 
-module.exports = checkPropTypes;
+/**
+ * Wrapper for checkPropTypes allowing for the evaluation of a single value
+ */
+function checkValueType(typeSpec, value, location = 'param', componentName = 'function') {
+
+}
+
+module.exports = {
+	checkPropTypes,
+	checkValueType,
+}

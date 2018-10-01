@@ -14,8 +14,6 @@ let PropTypes;
 
 function resetWarningCache() {
   jest.resetModules();
-
-  React = require('react');
   PropTypes = require('../index');
 }
 
@@ -45,8 +43,10 @@ function typeCheckFail(declaration, value, expectedMessage) {
   const props = {
     testProp: value,
   };
-  const message = getPropTypeWarningMessage(propTypes, props, 'testComponent');
-  expect(message).toContain(expectedMessage);
+
+  expect(() => {
+	PropTypes.checkPropTypes(propTypes, props, 'prop', 'testComponent');
+  }).toThrow()
 }
 
 function typeCheckFailRequiredValues(declaration) {
@@ -58,22 +58,28 @@ function typeCheckFailRequiredValues(declaration) {
   const propTypes = {testProp: declaration};
 
   // Required prop is null
-  const message1 = getPropTypeWarningMessage(
-    propTypes,
-    {testProp: null},
-    'testComponent',
-  );
-  expect(message1).toContain(specifiedButIsNullMsg);
+
+  expect(() => {
+	  const message1 = getPropTypeWarningMessage(
+		propTypes,
+		{testProp: null},
+		'testComponent',
+	  );
+  }).toThrow(specifiedButIsNullMsg);
 
   // Required prop is undefined
-  const message2 = getPropTypeWarningMessage(
-    propTypes,
-    {testProp: undefined},
-    'testComponent',
-  );
-  expect(message2).toContain(unspecifiedMsg);
+  expect(() => {
+	  const message2 = getPropTypeWarningMessage(
+		propTypes,
+		{testProp: undefined},
+		'testComponent',
+	  );
+  }).toThrow(unspecifiedMsg)
 
   // Required prop is not a member of props object
+  expect(() => {
+	  
+  }).toThrow(unspecifiedMsg);
   const message3 = getPropTypeWarningMessage(propTypes, {}, 'testComponent');
   expect(message3).toContain(unspecifiedMsg);
 }
@@ -111,39 +117,20 @@ describe('PropTypesDevelopmentStandalone', () => {
       spyOn(console, 'error')
       const propTypes = { foo: undefined };
       const props = { foo: 'foo' };
-      PropTypes.checkPropTypes(
-        propTypes,
-        props,
-        'prop',
-        'testComponent',
-        null,
-      );
-      expect(console.error.calls.argsFor(0)[0]).toEqual(
-        'Warning: Failed prop type: testComponent: prop type `foo` is invalid; ' +
-        'it must be a function, usually from the `prop-types` package, but received `undefined`.'
-      );
+
+
+      expect(() => {
+		  PropTypes.checkPropTypes(
+			propTypes,
+			props,
+			'prop',
+			'testComponent',
+			null,
+		  );
+	  }).toThrow(/prop type `foo` is invalid/);
     });
 
-    it('does not return a value from a validator', () => {
-      spyOn(console, 'error');
-      const propTypes = {
-        foo(props, propName, componentName) {
-          return new Error('some error');
-        },
-      };
-      const props = {foo: 'foo'};
-      const returnValue = PropTypes.checkPropTypes(
-        propTypes,
-        props,
-        'prop',
-        'testComponent',
-        null,
-      );
-      expect(console.error.calls.argsFor(0)[0]).toContain('some error');
-      expect(returnValue).toBe(undefined);
-    });
-
-    it('does not throw if validator throws', () => {
+    it('throws if validator throws', () => {
       spyOn(console, 'error');
       const propTypes = {
         foo(props, propName, componentName) {
@@ -151,15 +138,15 @@ describe('PropTypesDevelopmentStandalone', () => {
         },
       };
       const props = {foo: 'foo'};
-      const returnValue = PropTypes.checkPropTypes(
-        propTypes,
-        props,
-        'prop',
-        'testComponent',
-        null,
-      );
-      expect(console.error.calls.argsFor(0)[0]).toContain('some error');
-      expect(returnValue).toBe(undefined);
+	  expect(() => {
+		  const returnValue = PropTypes.checkPropTypes(
+			propTypes,
+			props,
+			'prop',
+			'testComponent',
+			null,
+		  );
+	  }).toThrow();
     });
 
     it('warns if any of the propTypes is not a function', () => {
@@ -168,12 +155,10 @@ describe('PropTypesDevelopmentStandalone', () => {
         foo: PropTypes.invalid_type,
       };
       const props = { foo: 'foo' };
-      const returnValue = PropTypes.checkPropTypes(propTypes, props, 'prop', 'testComponent', null);
-      expect(console.error.calls.argsFor(0)[0]).toEqual(
-        'Warning: Failed prop type: testComponent: prop type `foo` is invalid; '
-        + 'it must be a function, usually from the `prop-types` package, but received `undefined`.'
-      );
-      expect(returnValue).toBe(undefined);
+
+	  expect(() => {
+		   PropTypes.checkPropTypes(propTypes, props, 'prop', 'testComponent', null);
+	  }).toThrow(/prop type `foo` is invalid/);
     });
   });
 
@@ -432,60 +417,6 @@ describe('PropTypesDevelopmentStandalone', () => {
     });
   });
 
-  describe('Component Type', () => {
-
-    it('should support components', () => {
-      typeCheckPass(PropTypes.element, <div />);
-    });
-
-    it('should not support multiple components or scalar values', () => {
-      typeCheckFail(
-        PropTypes.element,
-        [<div />, <div />],
-        'Invalid prop `testProp` of type `array` supplied to `testComponent`, ' +
-          'expected a single ReactElement.',
-      );
-      typeCheckFail(
-        PropTypes.element,
-        123,
-        'Invalid prop `testProp` of type `number` supplied to `testComponent`, ' +
-          'expected a single ReactElement.',
-      );
-      typeCheckFail(
-        PropTypes.element,
-        'foo',
-        'Invalid prop `testProp` of type `string` supplied to `testComponent`, ' +
-          'expected a single ReactElement.',
-      );
-      typeCheckFail(
-        PropTypes.element,
-        false,
-        'Invalid prop `testProp` of type `boolean` supplied to `testComponent`, ' +
-          'expected a single ReactElement.',
-      );
-    });
-
-    it('should be implicitly optional and not warn without values', () => {
-      typeCheckPass(PropTypes.element, null);
-      typeCheckPass(PropTypes.element, undefined);
-    });
-
-    it('should warn for missing required values', () => {
-      typeCheckFailRequiredValues(PropTypes.element.isRequired);
-    });
-
-    it('should warn if called manually in development', () => {
-      spyOn(console, 'error');
-      expectThrowsInDevelopment(PropTypes.element, [<div />, <div />]);
-      expectThrowsInDevelopment(PropTypes.element, <div />);
-      expectThrowsInDevelopment(PropTypes.element, 123);
-      expectThrowsInDevelopment(PropTypes.element, 'foo');
-      expectThrowsInDevelopment(PropTypes.element, false);
-      expectThrowsInDevelopment(PropTypes.element.isRequired, null);
-      expectThrowsInDevelopment(PropTypes.element.isRequired, undefined);
-    });
-  });
-
   describe('Instance Types', () => {
     it('should warn for invalid instances', () => {
       function Person() {}
@@ -582,104 +513,6 @@ describe('PropTypesDevelopmentStandalone', () => {
         PropTypes.instanceOf(Date).isRequired,
         new Date(),
       );
-    });
-  });
-
-  describe('React Component Types', () => {
-    it('should warn for invalid values', () => {
-      const failMessage = 'Invalid prop `testProp` supplied to ' +
-        '`testComponent`, expected a ReactNode.';
-      typeCheckFail(PropTypes.node, true, failMessage);
-      typeCheckFail(PropTypes.node, function() {}, failMessage);
-      typeCheckFail(PropTypes.node, {key: function() {}}, failMessage);
-      typeCheckFail(PropTypes.node, {key: <div />}, failMessage);
-    });
-
-    it('should not warn for valid values', () => {
-      function MyComponent() {}
-      MyComponent.prototype.render = function() {
-        return <div />;
-      };
-      typeCheckPass(PropTypes.node, <div />);
-      typeCheckPass(PropTypes.node, false);
-      typeCheckPass(PropTypes.node, <MyComponent />);
-      typeCheckPass(PropTypes.node, 'Some string');
-      typeCheckPass(PropTypes.node, []);
-      typeCheckPass(PropTypes.node, [
-        123,
-        'Some string',
-        <div />,
-        ['Another string', [456], <span />, <MyComponent />],
-        <MyComponent />,
-        null,
-        undefined,
-      ]);
-    });
-
-    it('should not warn for iterables', () => {
-      function MyComponent() {}
-      MyComponent.prototype.render = function() {
-        return <div />;
-      };
-      const iterable = {
-        '@@iterator': function() {
-          let i = 0;
-          return {
-            next: function() {
-              const done = ++i > 2;
-              return {value: done ? undefined : <MyComponent />, done: done};
-            },
-          };
-        },
-      };
-
-      typeCheckPass(PropTypes.node, iterable);
-    });
-
-    it('should not warn for entry iterables', () => {
-      function MyComponent() {}
-      MyComponent.prototype.render = function() {
-        return <div />;
-      };
-      const iterable = {
-        '@@iterator': function() {
-          let i = 0;
-          return {
-            next: function() {
-              const done = ++i > 2;
-              return {
-                value: done ? undefined : ['#' + i, <MyComponent />],
-                done: done,
-              };
-            },
-          };
-        },
-      };
-      iterable.entries = iterable['@@iterator'];
-
-      typeCheckPass(PropTypes.node, iterable);
-    });
-
-    it('should not warn for null/undefined if not required', () => {
-      typeCheckPass(PropTypes.node, null);
-      typeCheckPass(PropTypes.node, undefined);
-    });
-
-    it('should warn for missing required values', () => {
-      typeCheckFailRequiredValues(PropTypes.node.isRequired);
-    });
-
-    it('should accept empty array for required props', () => {
-      typeCheckPass(PropTypes.node.isRequired, []);
-    });
-
-    it('should warn if called manually in development', () => {
-      spyOn(console, 'error');
-      expectThrowsInDevelopment(PropTypes.node, 'node');
-      expectThrowsInDevelopment(PropTypes.node, {});
-      expectThrowsInDevelopment(PropTypes.node.isRequired, 'node');
-      expectThrowsInDevelopment(PropTypes.node.isRequired, undefined);
-      expectThrowsInDevelopment(PropTypes.node.isRequired, undefined);
     });
   });
 
@@ -1072,7 +905,6 @@ describe('PropTypesDevelopmentStandalone', () => {
         PropTypes.shape({key: PropTypes.number}).isRequired,
         undefined,
       );
-      expectThrowsInDevelopment(PropTypes.element, <div />);
     });
   });
 
