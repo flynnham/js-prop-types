@@ -9,6 +9,7 @@
 
 const loggedTypeFailures = {};
 
+// assume we are bubbling this error upwards
 function printWarning(text) {
 	throw new Error(text);
 };
@@ -34,7 +35,7 @@ function checkPropTypes(typeSpecs, values, location = 'param', componentName = '
 				// This is intentionally an invariant that gets caught. It's the same
 				// behavior as without this statement except with a better message.
 				if (typeof typeSpecs[typeSpecName] !== 'function') {
-					var err = Error(
+					const err = Error(
 						(componentName || 'Anonymous') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +
 						'it must be a function, usually from the `js-prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'
 					);
@@ -67,13 +68,24 @@ function checkPropTypes(typeSpecs, values, location = 'param', componentName = '
 			}
 		}
 	}
+
+	return true;
 }
 
 /**
  * Wrapper for checkPropTypes allowing for the evaluation of a single value
  */
-function checkValueType(typeSpec, value, location = 'param', componentName = 'function') {
+function checkValueType(value, typeSpec, throws = false, location = 'param', componentName = 'function') {
+	const spec = { value: typeSpec };
 
+	try {
+		checkPropTypes(spec, { value }, location, componentName);
+	} catch (e) {
+		if (throws) throw e;
+		return false;
+	}
+
+	return true;
 }
 
 module.exports = {

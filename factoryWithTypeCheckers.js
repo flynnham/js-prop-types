@@ -14,7 +14,7 @@ const has = Function.call.bind(Object.prototype.hasOwnProperty);
 // warnings here are tentative and can be pushed to stderr instead
 // of bubbling up
 const printWarning = function(text) {
-	var message = 'Warning: ' + text;
+	const message = 'Warning: ' + text;
 	if (typeof console !== 'undefined') {
 		console.error(message);
 	}
@@ -50,7 +50,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 	 * @return {?function}
 	 */
 	function getIteratorFn(maybeIterable) {
-		var iteratorFn = maybeIterable && (ITERATOR_SYMBOL && maybeIterable[ITERATOR_SYMBOL] || maybeIterable[FAUX_ITERATOR_SYMBOL]);
+		const iteratorFn = maybeIterable && (ITERATOR_SYMBOL && maybeIterable[ITERATOR_SYMBOL] || maybeIterable[FAUX_ITERATOR_SYMBOL]);
 		if (typeof iteratorFn === 'function') {
 			return iteratorFn;
 		}
@@ -103,11 +103,11 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 	 * @internal
 	 */
 
-	var ANONYMOUS = '<<anonymous>>';
+	const ANONYMOUS = '<<anonymous>>';
 
 	// Important!
 	// Keep this list in sync with production version in `./factoryWithThrowingShims.js`.
-	var ReactPropTypes = {
+	const ReactPropTypes = {
 		array: createPrimitiveTypeChecker('array'),
 		bool: createPrimitiveTypeChecker('boolean'),
 		func: createPrimitiveTypeChecker('function'),
@@ -159,10 +159,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 	InternalTypeError.prototype = Error.prototype;
 
 	function createChainableTypeChecker(validate) {
-		var manualPropTypeCallCache = {};
-		var manualPropTypeWarningCount = 0;
-
-		function checkType(isRequired, props, propName, componentName, location, propFullName, secret) {
+		function checkType(isRequired, props, propName, componentName, location, propFullName) {
 			componentName = componentName || ANONYMOUS;
 			propFullName = propFullName || propName;
 
@@ -179,7 +176,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 			}
 		}
 
-		var chainedCheckType = checkType.bind(null, false);
+		const chainedCheckType = checkType.bind(null, false);
 		chainedCheckType.isRequired = checkType.bind(null, true);
 
 		return chainedCheckType;
@@ -187,13 +184,13 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 	function createPrimitiveTypeChecker(expectedType) {
 		function validate(props, propName, componentName, location, propFullName, secret) {
-			var propValue = props[propName];
-			var propType = getPropType(propValue);
+			const propValue = props[propName];
+			const propType = getPropType(propValue);
 			if (propType !== expectedType) {
 				// `propValue` being instance of, say, date/regexp, pass the 'object'
 				// check, but we can offer a more precise error message here rather than
 				// 'of type `object`'.
-				var preciseType = getPreciseType(propValue);
+				const preciseType = getPreciseType(propValue);
 
 				return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + preciseType + '` supplied to `' + componentName + '`, expected ') + ('`' + expectedType + '`.'));
 			}
@@ -213,11 +210,11 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 			}
 			var propValue = props[propName];
 			if (!Array.isArray(propValue)) {
-				var propType = getPropType(propValue);
+				const propType = getPropType(propValue);
 				return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an array.'));
 			}
 			for (var i = 0; i < propValue.length; i++) {
-				var error = typeChecker(propValue, i, componentName, location, propFullName + '[' + i + ']');
+				const error = typeChecker(propValue, i, componentName, location, propFullName + '[' + i + ']');
 				if (error instanceof Error) {
 					return error;
 				}
@@ -230,8 +227,8 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 	function createInstanceTypeChecker(expectedClass) {
 		function validate(props, propName, componentName, location, propFullName) {
 			if (!(props[propName] instanceof expectedClass)) {
-				var expectedClassName = expectedClass.name || ANONYMOUS;
-				var actualClassName = getClassName(props[propName]);
+				const expectedClassName = expectedClass.name || ANONYMOUS;
+				const actualClassName = getClassName(props[propName]);
 				return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + actualClassName + '` supplied to `' + componentName + '`, expected ') + ('instance of `' + expectedClassName + '`.'));
 			}
 			return null;
@@ -246,14 +243,14 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 		}
 
 		function validate(props, propName, componentName, location, propFullName) {
-			var propValue = props[propName];
-			for (var i = 0; i < expectedValues.length; i++) {
+			const propValue = props[propName];
+			for (let i = 0; i < expectedValues.length; i++) {
 				if (is(propValue, expectedValues[i])) {
 					return null;
 				}
 			}
 
-			var valuesString = JSON.stringify(expectedValues);
+			const valuesString = JSON.stringify(expectedValues);
 			return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of value `' + propValue + '` ' + ('supplied to `' + componentName + '`, expected one of ' + valuesString + '.'));
 		}
 		return createChainableTypeChecker(validate);
@@ -264,14 +261,14 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 			if (typeof typeChecker !== 'function') {
 				return new InternalTypeError('Property `' + propFullName + '` of component `' + componentName + '` has invalid PropType notation inside objectOf.');
 			}
-			var propValue = props[propName];
-			var propType = getPropType(propValue);
+			const propValue = props[propName];
+			const  propType = getPropType(propValue);
 			if (propType !== 'object') {
 				return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an object.'));
 			}
-			for (var key in propValue) {
+			for (let key in propValue) {
 				if (has(propValue, key)) {
-					var error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key);
+					const error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key);
 					if (error instanceof Error) {
 						return error;
 					}
@@ -288,8 +285,8 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 			return emptyFunctionThatReturnsNull;
 		}
 
-		for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
-			var checker = arrayOfTypeCheckers[i];
+		for (let i = 0; i < arrayOfTypeCheckers.length; i++) {
+			const checker = arrayOfTypeCheckers[i];
 			if (typeof checker !== 'function') {
 				printWarning(
 					'Invalid argument supplied to oneOfType. Expected an array of check functions, but ' +
@@ -300,8 +297,8 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 		}
 
 		function validate(props, propName, componentName, location, propFullName) {
-			for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
-				var checker = arrayOfTypeCheckers[i];
+			for (let i = 0; i < arrayOfTypeCheckers.length; i++) {
+				const checker = arrayOfTypeCheckers[i];
 				if (checker(props, propName, componentName, location, propFullName) == null) {
 					return null;
 				}
@@ -324,17 +321,17 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 	function createShapeTypeChecker(shapeTypes) {
 		function validate(props, propName, componentName, location, propFullName) {
-			var propValue = props[propName];
-			var propType = getPropType(propValue);
+			const propValue = props[propName];
+			const propType = getPropType(propValue);
 			if (propType !== 'object') {
 				return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
 			}
-			for (var key in shapeTypes) {
-				var checker = shapeTypes[key];
+			for (let key in shapeTypes) {
+				const checker = shapeTypes[key];
 				if (!checker) {
 					continue;
 				}
-				var error = checker(propValue, key, componentName, location, propFullName + '.' + key);
+				const error = checker(propValue, key, componentName, location, propFullName + '.' + key);
 				if (error) {
 					return error;
 				}
@@ -346,16 +343,16 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 	function createStrictShapeTypeChecker(shapeTypes) {
 		function validate(props, propName, componentName, location, propFullName) {
-			var propValue = props[propName];
-			var propType = getPropType(propValue);
+			const propValue = props[propName];
+			const propType = getPropType(propValue);
 			if (propType !== 'object') {
 				return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
 			}
 			// We need to check all keys in case some are required but missing from
 			// props.
-			var allKeys = Object.assign({}, props[propName], shapeTypes);
-			for (var key in allKeys) {
-				var checker = shapeTypes[key];
+			const allKeys = Object.assign({}, props[propName], shapeTypes);
+			for (let key in allKeys) {
+				const checker = shapeTypes[key];
 				if (!checker) {
 					return new InternalTypeError(
 						'Invalid ' + location + ' `' + propFullName + '` key `' + key + '` supplied to `' + componentName + '`.' +
@@ -363,7 +360,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 						'\nValid keys: ' + JSON.stringify(Object.keys(shapeTypes), null, '  ')
 					);
 				}
-				var error = checker(propValue, key, componentName, location, propFullName + '.' + key);
+				const error = checker(propValue, key, componentName, location, propFullName + '.' + key);
 				if (error) {
 					return error;
 				}
@@ -392,8 +389,8 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 				var iteratorFn = getIteratorFn(propValue);
 				if (iteratorFn) {
-					var iterator = iteratorFn.call(propValue);
-					var step;
+					const iterator = iteratorFn.call(propValue);
+					let step;
 					if (iteratorFn !== propValue.entries) {
 						while (!(step = iterator.next()).done) {
 							if (!isNode(step.value)) {
@@ -403,7 +400,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 					} else {
 						// Iterator will provide entry [k,v] tuples rather than values.
 						while (!(step = iterator.next()).done) {
-							var entry = step.value;
+							const entry = step.value;
 							if (entry) {
 								if (!isNode(entry[1])) {
 									return false;
@@ -442,7 +439,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 	// Equivalent of `typeof` but with special handling for array and regexp.
 	function getPropType(propValue) {
-		var propType = typeof propValue;
+		const propType = typeof propValue;
 		if (Array.isArray(propValue)) {
 			return 'array';
 		}
@@ -464,7 +461,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 		if (typeof propValue === 'undefined' || propValue === null) {
 			return '' + propValue;
 		}
-		var propType = getPropType(propValue);
+		const propType = getPropType(propValue);
 		if (propType === 'object') {
 			if (propValue instanceof Date) {
 				return 'date';
@@ -478,7 +475,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 	// Returns a string that is postfixed to a warning about an invalid type.
 	// For example, "undefined" or "of type array"
 	function getPostfixForTypeWarning(value) {
-		var type = getPreciseType(value);
+		const type = getPreciseType(value);
 		switch (type) {
 			case 'array':
 			case 'object':
