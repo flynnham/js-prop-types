@@ -14,16 +14,8 @@ const has = Function.call.bind(Object.prototype.hasOwnProperty);
 // warnings here are tentative and can be pushed to stderr instead
 // of bubbling up
 const printWarning = function(text) {
-	const message = 'Warning: ' + text;
-	if (typeof console !== 'undefined') {
-		console.error(message);
-	}
-	try {
-		// --- Welcome to debugging React ---
-		// This error was thrown as a convenience so that you can use this stack
-		// to find the callsite that caused this warning to fire.
-		throw new Error(message);
-	} catch (x) {}
+	const message = `Warning: ${text}`;
+	console.error(message);
 };
 
 function emptyFunctionThatReturnsNull() {
@@ -198,11 +190,11 @@ module.exports = function() {
 				return new InternalTypeError('Property `' + propFullName + '` of component `' + componentName + '` has invalid PropType notation inside objectOf.');
 			}
 			const propValue = props[propName];
-			const  propType = getPropType(propValue);
+			const propType = getPropType(propValue);
 			if (propType !== 'object') {
 				return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an object.'));
 			}
-			for (let key in propValue) {
+			for (const key in propValue) {
 				if (has(propValue, key)) {
 					const error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key);
 					if (error instanceof Error) {
