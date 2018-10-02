@@ -4,15 +4,6 @@
   "description": "Vanilla oriented type checking library based on Facebook's prop-types.",
   "main": "index.js",
   "license": "MIT",
-  "files": [
-    "LICENSE",
-    "README.md",
-    "checkPropTypes.js",
-    "factory.js",
-    "factoryWithTypeCheckers.js",
-    "index.js",
-    "lib"
-  ],
   "repository": "flynnham/js-prop-types",
   "keywords": [
     "type"
