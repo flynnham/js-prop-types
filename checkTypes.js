@@ -25,9 +25,9 @@ function printWarning(text) {
  * @private
  */
 function checkPropTypes(typeSpecs, values, location = 'param', componentName = 'function') {
-	for (var typeSpecName in typeSpecs) {
+	for (let typeSpecName in typeSpecs) {
 		if (typeSpecs.hasOwnProperty(typeSpecName)) {
-			var error;
+			let error;
 			// Prop type validation may throw. In case they do, we don't want to
 			// fail the render phase where it didn't fail before. So we log it.
 			// After these have been cleaned up, we'll let them throw.
@@ -75,11 +75,12 @@ function checkPropTypes(typeSpecs, values, location = 'param', componentName = '
 /**
  * Wrapper for checkPropTypes allowing for the evaluation of a single value
  */
-function checkValueType(value, typeSpec, throws = false, location = 'param', componentName = 'function') {
+function checkValueType(value, typeSpec, throws = true, location = 'param', componentName = 'function') {
 	const spec = { value: typeSpec };
 
 	try {
-		checkPropTypes(spec, { value }, location, componentName);
+		// { value: value } preserves any undefined refs
+		checkPropTypes(spec, { value: value }, location, componentName);
 	} catch (e) {
 		if (throws) throw e;
 		return false;

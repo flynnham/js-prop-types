@@ -30,19 +30,19 @@ function emptyFunctionThatReturnsNull() {
 	return null;
 }
 
-module.exports = function(isValidElement, throwOnDirectAccess) {
+module.exports = function() {
 	/* global Symbol */
-	var ITERATOR_SYMBOL = typeof Symbol === 'function' && Symbol.iterator;
-	var FAUX_ITERATOR_SYMBOL = '@@iterator'; // Before Symbol spec.
+	const ITERATOR_SYMBOL = typeof Symbol === 'function' && Symbol.iterator;
+	const FAUX_ITERATOR_SYMBOL = '@@iterator'; // Before Symbol spec.
 
 	/**
 	 * Returns the iterator method function contained on the iterable object.
 	 *
 	 * Be sure to invoke the function with the iterable as context:
 	 *
-	 *     var iteratorFn = getIteratorFn(myIterable);
+	 *     let iteratorFn = getIteratorFn(myIterable);
 	 *     if (iteratorFn) {
-	 *       var iterator = iteratorFn.call(myIterable);
+	 *       let iterator = iteratorFn.call(myIterable);
 	 *       ...
 	 *     }
 	 *
@@ -56,58 +56,9 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 		}
 	}
 
-	/**
-	 * Collection of methods that allow declaration and validation of props that are
-	 * supplied to React components. Example usage:
-	 *
-	 *   var Props = require('ReactPropTypes');
-	 *   var MyArticle = React.createClass({
-	 *     propTypes: {
-	 *       // An optional string prop named "description".
-	 *       description: Props.string,
-	 *
-	 *       // A required enum prop named "category".
-	 *       category: Props.oneOf(['News','Photos']).isRequired,
-	 *
-	 *       // A prop named "dialog" that requires an instance of Dialog.
-	 *       dialog: Props.instanceOf(Dialog).isRequired
-	 *     },
-	 *     render: function() { ... }
-	 *   });
-	 *
-	 * A more formal specification of how these methods are used:
-	 *
-	 *   type := array|bool|func|object|number|string|oneOf([...])|instanceOf(...)
-	 *   decl := ReactPropTypes.{type}(.isRequired)?
-	 *
-	 * Each and every declaration produces a function with the same signature. This
-	 * allows the creation of custom validation functions. For example:
-	 *
-	 *  var MyLink = React.createClass({
-	 *    propTypes: {
-	 *      // An optional string or URI prop named "href".
-	 *      href: function(props, propName, componentName) {
-	 *        var propValue = props[propName];
-	 *        if (propValue != null && typeof propValue !== 'string' &&
-	 *            !(propValue instanceof URI)) {
-	 *          return new Error(
-	 *            'Expected a string or an URI for ' + propName + ' in ' +
-	 *            componentName
-	 *          );
-	 *        }
-	 *      }
-	 *    },
-	 *    render: function() {...}
-	 *  });
-	 *
-	 * @internal
-	 */
-
 	const ANONYMOUS = '<<anonymous>>';
 
-	// Important!
-	// Keep this list in sync with production version in `./factoryWithThrowingShims.js`.
-	const ReactPropTypes = {
+	const PropTypes = {
 		array: createPrimitiveTypeChecker('array'),
 		bool: createPrimitiveTypeChecker('boolean'),
 		func: createPrimitiveTypeChecker('function'),
@@ -125,24 +76,6 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 		shape: createShapeTypeChecker,
 		exact: createStrictShapeTypeChecker,
 	};
-
-	/**
-	 * inlined Object.is polyfill to avoid requiring consumers ship their own
-	 * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is
-	 */
-	/*eslint-disable no-self-compare*/
-	function is(x, y) {
-		// SameValue algorithm
-		if (x === y) {
-			// Steps 1-5, 7-10
-			// Steps 6.b-6.e: +0 != -0
-			return x !== 0 || 1 / x === 1 / y;
-		} else {
-			// Step 6.a: NaN == NaN
-			return x !== x && y !== y;
-		}
-	}
-	/*eslint-enable no-self-compare*/
 
 	/**
 	 * We use an Error-like object for backward compatibility as people may call
@@ -176,8 +109,9 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 			}
 		}
 
-		const chainedCheckType = checkType.bind(null, false);
-		chainedCheckType.isRequired = checkType.bind(null, true);
+		// assume instance is required by default
+		const chainedCheckType = checkType.bind(null, true);
+		chainedCheckType.isOptional = checkType.bind(null, false);
 
 		return chainedCheckType;
 	}
@@ -208,12 +142,14 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 			if (typeof typeChecker !== 'function') {
 				return new InternalTypeError('Property `' + propFullName + '` of component `' + componentName + '` has invalid PropType notation inside arrayOf.');
 			}
-			var propValue = props[propName];
+			const propValue = props[propName];
+
 			if (!Array.isArray(propValue)) {
 				const propType = getPropType(propValue);
 				return new InternalTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an array.'));
 			}
-			for (var i = 0; i < propValue.length; i++) {
+
+			for (let i = 0; i < propValue.length; i++) {
 				const error = typeChecker(propValue, i, componentName, location, propFullName + '[' + i + ']');
 				if (error instanceof Error) {
 					return error;
@@ -238,14 +174,14 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 	function createEnumTypeChecker(expectedValues) {
 		if (!Array.isArray(expectedValues)) {
-			process.env.NODE_ENV !== 'production' ? printWarning('Invalid argument supplied to oneOf, expected an instance of array.') : void 0;
+			printWarning('Invalid argument supplied to oneOf, expected an instance of array.');
 			return emptyFunctionThatReturnsNull;
 		}
 
 		function validate(props, propName, componentName, location, propFullName) {
 			const propValue = props[propName];
 			for (let i = 0; i < expectedValues.length; i++) {
-				if (is(propValue, expectedValues[i])) {
+				if (Object.is(propValue, expectedValues[i])) {
 					return null;
 				}
 			}
@@ -281,7 +217,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 	function createUnionTypeChecker(arrayOfTypeCheckers) {
 		if (!Array.isArray(arrayOfTypeCheckers)) {
-			process.env.NODE_ENV !== 'production' ? printWarning('Invalid argument supplied to oneOfType, expected an instance of array.') : void 0;
+			printWarning('Invalid argument supplied to oneOfType, expected an instance of array.');
 			return emptyFunctionThatReturnsNull;
 		}
 
@@ -383,11 +319,11 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 				if (Array.isArray(propValue)) {
 					return propValue.every(isNode);
 				}
-				if (propValue === null || isValidElement(propValue)) {
+				if (propValue === null) {
 					return true;
 				}
 
-				var iteratorFn = getIteratorFn(propValue);
+				const iteratorFn = getIteratorFn(propValue);
 				if (iteratorFn) {
 					const iterator = iteratorFn.call(propValue);
 					let step;
@@ -497,9 +433,9 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 		return propValue.constructor.name;
 	}
 
-	ReactPropTypes.checkPropTypes = checkPropTypes;
-	ReactPropTypes.checkValueType = checkValueType;
-	ReactPropTypes.PropTypes = ReactPropTypes;
+	PropTypes.checkPropTypes = checkPropTypes;
+	PropTypes.checkValueType = checkValueType;
+	PropTypes.PropTypes = PropTypes;
 
-	return ReactPropTypes;
+	return PropTypes;
 };
