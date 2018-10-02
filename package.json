@@ -5,6 +5,11 @@
   "main": "index.js",
   "license": "MIT",
   "repository": "flynnham/js-prop-types",
+  "files": [
+    "index.js",
+    "checkTypes.js",
+    "factoryWithTypeCheckers.js"
+  ],
   "keywords": [
     "type"
   ],
