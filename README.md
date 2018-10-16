@@ -1,12 +1,20 @@
-# js-prop-types
+# js-prop-types (experimental)
+[![npm](https://img.shields.io/npm/v/@o3/prop-types.svg)](https://www.npmjs.com/package/@o3/prop-types)
 
-This my own environment agnostic reworking of
+An environment agnostic reworking of
 [Facebook's React prop-types](https://github.com/facebook/prop-types) implementation.
+
+This package is intended to be used with  [@o3/typed](https://www.npmjs.com/package/@o3/typed), as a complementary abstract type
+checking tool.
+
+## What it does
 
 This implementation allows type validation via thrown Type exceptions, which is
 useful for type checking on primitive values outside of a React/Browser environment.
 
 ## Significant deviations from the original source
+
+* Removed environment safe-guards to enable exception bubbling for type errors.
 
 * Converted `type.isRequired` to `type.isOptional` to assume that all type
 checks assume a value to be provided by default (and to throw if otherwise).
